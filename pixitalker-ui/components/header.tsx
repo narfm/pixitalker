@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { MainNav } from "@/components/main-nav"
 import { UserNav } from "@/components/user-nav"
+import { AudioPlayer } from "@/components/audio-player"
 
 export function Header() {
   return (
@@ -13,6 +14,7 @@ export function Header() {
         </Link>
         <MainNav />
         <div className="ml-auto flex items-center space-x-4">
+          <AudioPlayer />
           <UserNav />
         </div>
       </div>
