@@ -1,8 +1,12 @@
 'use client'
 
+import { useState, useCallback } from 'react'
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { MessageSquare, User } from 'lucide-react'
+import { MicrophoneButton } from './microphone-button'
+import { openai } from '@/lib/openai'
+import { Controls } from './controls'
 
 interface Message {
   role: 'user' | 'teacher'
@@ -11,26 +15,23 @@ interface Message {
 }
 
 export function ChatPanel() {
-  const messages: Message[] = [
+  const [messages, setMessages] = useState<Message[]>([
     {
       role: 'teacher',
       content: 'Welcome to our interactive classroom! What would you like to learn today?',
-      timestamp: '10:00 AM'
-    },
-    {
-      role: 'user',
-      content: 'I want to learn about addition!',
-      timestamp: '10:01 AM'
-    },
-    {
-      role: 'teacher',
-      content: "That's great! Let's start with some simple addition problems.",
-      timestamp: '10:01 AM'
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
-  ]
+  ])
+
+  const handleNewMessage = useCallback((message: { role: 'user' | 'teacher'; content: string }) => {
+    setMessages(prev => [...prev, {
+      ...message,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    }])
+  }, [])
 
   return (
-    <div className="flex h-[calc(100vh-200px)] flex-col">
+    <div className="flex h-[calc(100vh-80px)] flex-col">
       <div className="flex items-center gap-2 border-b px-4 py-2 bg-gradient-to-r from-blue-50 to-purple-50">
         <MessageSquare className="h-5 w-5 text-blue-500" />
         <h2 className="font-semibold bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-500">Chat</h2>
@@ -68,6 +69,7 @@ export function ChatPanel() {
           ))}
         </div>
       </ScrollArea>
+      <Controls onNewMessage={handleNewMessage} />
     </div>
   )
 }

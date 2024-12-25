@@ -39,7 +39,6 @@ export default function Page() {
             isChatOpen ? 'translate-x-0' : 'translate-x-[350px]'
           }`}>
             <ChatPanel />
-            <Controls />
           </div>
         </div>
       </main>
