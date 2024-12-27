@@ -2,53 +2,36 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import type { MathExample } from "./types/math"
+import { Button } from "./ui/button"
+import type { MathProblem } from "./types/math"
 
-interface MathExampleProps {
-  content: MathExample
+interface MathProblemProps {
+  content: MathProblem
   isPlaying: boolean
   onComplete: () => void
 }
 
-export function MathExample({ content, isPlaying, onComplete }: MathExampleProps) {
+export function MathProblem({ content, isPlaying, onComplete }: MathProblemProps) {
   const [currentStep, setCurrentStep] = useState(0)
-  const [counting, setCounting] = useState(0)
+  const [showHint, setShowHint] = useState(false)
 
   useEffect(() => {
     if (!isPlaying) return
 
     let timeout: NodeJS.Timeout
-    let countInterval: NodeJS.Timeout
 
-    if (currentStep === 3) {
-      let count = 0
-      countInterval = setInterval(() => {
-        count++
-        setCounting(count)
-        if (count >= parseInt(content.result)) {
-          clearInterval(countInterval)
-          timeout = setTimeout(() => {
-            setCurrentStep(prev => prev + 1)
-          }, 2000)
-        }
-      }, 1000)
-    } else if (currentStep < 4) {
+    if (currentStep < 2) {
       timeout = setTimeout(() => {
         setCurrentStep(prev => prev + 1)
-      }, currentStep === 2 ? 3000 : 4000)
-    } else {
-      timeout = setTimeout(onComplete, 3000)
+      }, 4000)
     }
 
-    return () => {
-      clearTimeout(timeout)
-      clearInterval(countInterval)
-    }
-  }, [currentStep, isPlaying, content.result, onComplete])
+    return () => clearTimeout(timeout)
+  }, [currentStep, isPlaying])
 
   const steps = [
     {
-      title: "Question",
+      title: "Problem",
       content: (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -93,58 +76,51 @@ export function MathExample({ content, isPlaying, onComplete }: MathExampleProps
       )
     },
     {
-      title: "Operation",
+      title: "Your Turn!",
       content: (
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          className="text-4xl font-bold text-purple-500"
-        >
-          {content.operation} = ?
-        </motion.div>
-      )
-    },
-    {
-      title: "Let's Count",
-      content: (
-        <div className="space-y-4">
+        <div className="space-y-6">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="text-2xl text-purple-600"
+            className="text-2xl font-bold text-purple-600"
           >
-            {content.explanation}
+            {content.question}
           </motion.div>
           <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className="text-6xl font-bold text-purple-500"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-lg text-purple-500"
           >
-            {counting}
+            {content.expected_interaction}
           </motion.div>
-        </div>
-      )
-    },
-    {
-      title: "Result",
-      content: (
-        <motion.div
-          initial={{ scale: 0, rotate: -180 }}
-          animate={{ scale: 1, rotate: 0 }}
-          className="space-y-4"
-        >
-          <div className="text-4xl font-bold text-purple-500">
-            {content.operation} = {content.result}
+          <AnimatePresence>
+            {showHint && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="text-lg text-orange-500 italic"
+              >
+                💡 {content.hint}
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <div className="flex justify-center gap-4">
+            <Button
+              variant="outline"
+              onClick={() => setShowHint(!showHint)}
+              className="border-purple-200 hover:bg-purple-100"
+            >
+              {showHint ? "Hide Hint" : "Show Hint"}
+            </Button>
+            <Button
+              onClick={onComplete}
+              className="bg-purple-500 hover:bg-purple-600"
+            >
+              I Got It!
+            </Button>
           </div>
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="text-6xl"
-          >
-            🎉
-          </motion.div>
-        </motion.div>
+        </div>
       )
     }
   ]
