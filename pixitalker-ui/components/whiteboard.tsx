@@ -8,6 +8,7 @@ import { MathExample } from "./MathExample"
 import { MathProblem } from "./MathProblem"
 import { MathContent } from "./types/math"
 import { parseXML } from "@/lib/xml-parser"
+import { eventEmitter } from '@/lib/event-emitter'
 
 
 export function Whiteboard() {
@@ -24,16 +25,12 @@ export function Whiteboard() {
 
     // Listen for messages from chat component
     useEffect(() => {
-      const handleMessage = (event: MessageEvent) => {
-        if (event.data && (event.data?.type === 'example' || event.data?.type === 'problem')) {
-          // setCurrentExample(event.data.content)
-          setCurrentContent(parseXML(event.data.content))
-
-        }
+      const handleMathContent = (data: { type: 'example' | 'problem', content: string }) => {
+        setCurrentContent(parseXML(data.content))
       }
-  
-      window.addEventListener('message', handleMessage)
-      return () => window.removeEventListener('message', handleMessage)
+
+      eventEmitter.on('mathContent', handleMathContent)
+      return () => eventEmitter.off('mathContent', handleMathContent)
     }, [])
 
   if (!isVisible || !currentContent) return null

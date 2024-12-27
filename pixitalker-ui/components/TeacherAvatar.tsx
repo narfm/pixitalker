@@ -7,7 +7,7 @@ const TeacherAvatar = () => {
   const { rive, RiveComponent } = useRive({
     src: '/head_tracking_rig.riv',
     layout: new Layout(),
-    autoplay: false,
+    autoplay: true,
     stateMachines: ["loopSquash", "loopIdle", "Fly 2 Movement", "Fly1 Wings"]
   });
 

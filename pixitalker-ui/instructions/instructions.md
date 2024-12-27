@@ -1,112 +1,143 @@
-### Product Requirement Document (PRD)
-
-### Overview
-
-This PRD outlines the requirements for a children-friendly, interactive chat interface for a homework help application. The interface will feature a cartoon teacher character that interacts with children in a classroom setting, providing help with their homework, especially in math. The interface will also include an adjacent game window for math-related games, quizzes, and puzzles. The application will be developed using Next.js, with classroom scenes and animations rendered by PixiJS.
+### **Product Requirements Document (PRD)**  
+#### **Title:** Modular Orchestrator for Interactive Learning App  
 
 ---
 
-### Goals and Objectives
-
-1. **Engagement:** Create an engaging environment for children to learn and interact with a virtual teacher character.
-2. **Interactive Learning:** Incorporate real-time chat and games to help children understand and practice homework concepts, particularly in math.
-3. **Ease of Use:** Design a child-friendly interface that’s intuitive and visually appealing.
-4. **Multi-Purpose Interface:** Provide the teacher character with capabilities for explaining, demonstrating, and guiding through math problems, as well as engaging in simple quizzes and puzzles.
+### **Objective**  
+Develop a modular orchestrator system for a children’s interactive learning app using Next.js. The orchestrator (Teacher Agent) will route user queries to domain-specific APIs (e.g., Addition, Subtraction), manage session context, and provide personalized feedback to enhance the learning experience.
 
 ---
 
-### Functional Requirements
+### **Key Features**  
 
-#### 1. **Chat Interface**
-   - **Teacher Avatar:** A cartoon teacher character rendered in a classroom setting using PixiJS.
-   - **Dialog System:** The teacher will "talk" to children through a text-to-speech (TTS) function, responding to typed questions or selected prompts.
-   - **Child Input Options:**
-      - Text input for questions.
-      - Option to select pre-configured questions or topics.
-   - **Animated Speech:** The teacher’s mouth and facial expressions will animate to simulate speaking.
-   - **Example Rendering:** Math problems and examples will be presented in a child-friendly format (e.g., using animated objects and emojis per user’s predefined set).
-   - **Guided Help:** The teacher can break down problems into step-by-step explanations, animating them visually to help children follow along.
+#### **1. Teacher Agent (Orchestrator)**  
+- **Role**: Acts as the primary entry point for student interactions.  
+- **Responsibilities**:
+  - Interpret student queries.  
+  - Identify the appropriate operation (addition, subtraction, etc.).  
+  - Route the query to the corresponding domain-specific API.  
+  - Collect and aggregate progress metrics from individual agents.  
+  - Provide session continuity and personalized feedback.  
 
-#### 2. **Classroom Setting (PixiJS)**
-   - **Classroom Scene:** A cartoon-like classroom backdrop with the teacher character seated in the center.
-   - **Visual Assets:**
-      - Desks, blackboard, educational posters, and other classroom objects to create an engaging atmosphere.
-      - Side Window for Games: A window to the right side for games and quizzes, rendered using PixiJS.
-   - **Interactive Objects:** The teacher can point to specific classroom items or use props for interactive lessons.
-
-#### 3. **Game Window for Math and Quiz Games**
-   - **Side Window Functionality:**
-      - Display math-related games, quizzes, or puzzles alongside the main classroom scene.
-      - The game window should be interactive, allowing children to answer questions, select answers, or drag-and-drop elements to solve puzzles.
-   - **Game Types:**
-      - **Math Quizzes:** Simple multiple-choice or fill-in-the-blank math problems.
-      - **Puzzle Games:** Number matching, basic arithmetic puzzles, or problem-solving games.
-      - **Math-Based Mini-Games:** Fun, interactive games with math elements such as counting objects, simple addition/subtraction, and sequence matching.
-   - **Progress Tracking:** Provide feedback on answers and track scores for completed games to encourage motivation and progress.
-
-#### 4. **Parent/Teacher Dashboard**
-   - **Dashboard Features:**
-      - Ability to review the child’s progress and activity (e.g., questions asked, games played, scores achieved).
-      - Real-time updates on the child's interactions in the chat and game interfaces.
-   - **Control Settings:**
-      - Enable/disable specific games or types of questions.
-      - Customize the level of difficulty in math problems presented in games.
+#### **2. Specialized Agents (APIs)**  
+Each specialized agent will operate as a standalone API, focusing on specific domains:  
+- **Addition Agent API**: Solves addition problems and provides step-by-step explanations.  
+- **Subtraction Agent API**: Handles subtraction queries with detailed guidance.  
+- **Future Agents**: Extendable for other operations like multiplication, division, or word problems.  
 
 ---
 
-### Non-Functional Requirements
-
-- **Usability:** The interface should be simple, intuitive, and engaging for children aged 5–10.
-- **Performance:** Render the chat, teacher animations, and game window efficiently to minimize load times and lag.
-- **Accessibility:** Ensure the chat and game functions are accessible for young children and support TTS for reading questions aloud.
-- **Scalability:** Support multiple users interacting with the teacher character at once without performance issues.
-
----
-
-### Technical Specifications
-
-- **Frontend Framework:** Next.js for the primary chat interface and general UI.
-- **Rendering Engine:** PixiJS for the classroom setting and animated teacher character.
-- **Language and Library Support:**
-   - JavaScript/TypeScript for all components.
-   - CSS (TailwindCSS for styling consistency).
-   - shadCN UI and Lucide Icons for additional UI elements.
-- **Voice Integration:** Use TTS capabilities (e.g., Whisper or another TTS engine) to enable the teacher character to speak.
-- **Audio and Animation Sync:** Sync the teacher’s facial animations with TTS for a lifelike interaction.
-- **Backend:** ChatGPT API to generate responses and guide learning interactions.
+### **User Flow**  
+1. **Query Input**: The student enters a query (e.g., “What is 5 + 3?”).  
+2. **Intent Analysis**: The Teacher Agent identifies the query intent (e.g., addition).  
+3. **Routing**: The Teacher Agent forwards the query to the corresponding API (Addition Agent).  
+4. **Response Generation**: The specialized agent processes the query and returns a detailed response.  
+5. **Feedback and Progress**: The Teacher Agent aggregates the response, updates the student’s progress, and provides feedback.  
 
 ---
 
-### User Flow
+### **Functional Requirements**  
 
-1. **Child Opens Interface:**
-   - The child enters the classroom setting and is greeted by the teacher character.
-2. **Ask Questions or Select Topics:**
-   - The child can either type a question, select from pre-set questions, or choose from available math topics.
-3. **Teacher Provides Help:**
-   - The teacher character speaks, animates, and guides the child through math problems or concepts.
-4. **Engage in a Game:**
-   - The child can choose to play a game in the side window to reinforce concepts through quizzes, puzzles, or interactive math exercises.
-5. **Progress Tracking:**
-   - As the child completes questions or games, scores and progress are logged for parent/teacher review in the dashboard.
+#### **Frontend**  
+- **Interface**:  
+  - Chat interface for the student to interact with the Teacher Agent.  
+  - Progress tracking dashboard showing scores, strengths, and improvement areas.  
+
+- **Interactivity**:  
+  - Visual representations of math problems using animations (e.g., whiteboard explanations).  
+  - Gamification elements like badges or rewards for milestones.  
+
+#### **Backend**  
+- **Teacher Agent (Orchestrator)**:  
+  - Query parsing and intent classification (e.g., using OpenAI GPT or a custom NLP model).  
+  - API routing logic to forward queries to appropriate agents.  
+  - Session and progress tracking using a database (e.g., PostgreSQL, MongoDB).  
+
+- **Specialized Agent APIs**:  
+  - Stateless APIs for domain-specific operations.  
+  - Input validation and error handling (e.g., malformed queries).  
+  - Step-by-step problem-solving explanations.  
 
 ---
 
-### Success Metrics
+### **Non-Functional Requirements**  
 
-1. **Engagement Rate:** Track how often children engage with the chat and games.
-2. **Completion Rate of Games and Quizzes:** Measure how often children complete games or puzzles.
-3. **Parent/Teacher Satisfaction:** Positive feedback on the dashboard’s insights and the app’s educational effectiveness.
-4. **System Performance:** Low latency and smooth animations in the classroom setting, games, and TTS interactions.
+- **Scalability**:  
+  - APIs should be horizontally scalable to handle increased load.  
+  - Teacher Agent should efficiently manage multiple concurrent sessions.  
+
+- **Performance**:  
+  - Query response time should be under 1 second for an optimal user experience.  
+
+- **Security**:  
+  - Secure API communication using HTTPS and token-based authentication.  
+  - Data privacy compliance (e.g., COPPA for children’s data).  
 
 ---
 
-### Future Enhancements
+### **System Architecture**  
 
-1. **Additional Teacher Characters:** Include multiple teacher avatars for more variety and personalization.
-2. **Expanded Game Library:** Add more educational games, covering other subjects such as language arts and science.
-3. **Personalized Difficulty Adjustment:** Allow the teacher character to adjust question difficulty based on the child’s skill level.
+#### **1. Frontend (Next.js)**  
+- **Components**:  
+  - **Chat Interface**: For interaction with the Teacher Agent.  
+  - **Dashboard**: Displays progress and achievements.  
+  - **Whiteboard Animation**: Renders visual explanations of problems.  
 
---- 
+- **State Management**:  
+  - Use Zustand or Redux for managing application state.  
 
-**End of Document**
+- **API Communication**:  
+  - Fetch Teacher Agent responses via REST or GraphQL APIs.  
+
+#### **2. Backend (Node.js)**  
+- **Teacher Agent Service**:  
+  - Handles session management and progress aggregation.  
+  - Routes queries to specialized agents via internal API calls.  
+
+- **Specialized Agents**:  
+  - Implemented as standalone Node.js services (e.g., Express or FastAPI for Python).  
+  - Provide domain-specific functionality.  
+
+#### **3. Database**  
+- **Type**: Relational or NoSQL (e.g., PostgreSQL or Firebase Firestore).  
+- **Usage**:  
+  - Store user progress, session data, and learning analytics.  
+
+#### **4. Communication**  
+- **Protocol**: REST or gRPC for internal API calls.  
+- **Authentication**: Use JWT tokens for securing API requests.  
+
+---
+
+### **API Endpoints**  
+
+#### **Teacher Agent API**  
+- `POST /query`: Accepts student queries and routes them to specialized agents.  
+- `GET /progress`: Retrieves the student’s progress data.  
+
+#### **Specialized Agent APIs**  
+- **Addition Agent**:  
+  - `POST /solve`: Solves addition problems and provides explanations.  
+- **Subtraction Agent**:  
+  - `POST /solve`: Handles subtraction problems and provides step-by-step guidance.  
+
+---
+
+### **Technical Considerations**  
+1. **Intent Analysis**: Use GPT or a lightweight NLP model for intent classification within the Teacher Agent.  
+2. **Rate Limiting**: Implement rate-limiting to prevent abuse of the APIs.  
+3. **Logging**: Use centralized logging for monitoring and debugging (e.g., ELK Stack).  
+4. **Extensibility**: New agents can be added without affecting existing functionality.  
+
+---
+
+### **Milestones and Timeline**  
+1. **Week 1-2**: Set up the Next.js frontend and initial backend structure.  
+2. **Week 3-4**: Implement Teacher Agent with intent analysis and routing logic.  
+3. **Week 5-6**: Develop Addition and Subtraction APIs.  
+4. **Week 7**: Integrate APIs with the frontend.  
+5. **Week 8**: Testing, debugging, and deployment.  
+
+---
+
+This PRD ensures the orchestrator system is modular, scalable, and engaging, while meeting the educational needs of young learners.

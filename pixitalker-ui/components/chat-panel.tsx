@@ -5,6 +5,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { MessageSquare, User } from 'lucide-react'
 import { Controls } from './controls'
+import { eventEmitter } from '@/lib/event-emitter'
 
 interface Message {
   role: 'user' | 'teacher'
@@ -34,14 +35,25 @@ export function ChatPanel() {
   }
 
   const handleNewMessage = useCallback((message: { role: 'user' | 'teacher'; content: string }) => {
-    // Check for example tag before formatting
+    // Check for example tag
     if (message.content.includes('<example>')) {
-      const exampleMatch = message.content.match(/<example>.*?<\/example>/s)
+      const exampleMatch = message.content.match(/<example>[\s\S]*?<\/example>/g)
       if (exampleMatch) {
-        window.postMessage({
+        eventEmitter.emit('mathContent', {
           type: 'example',
           content: exampleMatch[0]
-        }, '*')
+        })
+      }
+    }
+
+    // Check for problem tag
+    if (message.content.includes('<problem>')) {
+      const problemMatch = message.content.match(/<problem>[\s\S]*?<\/problem>/g)
+      if (problemMatch) {
+        eventEmitter.emit('mathContent', {
+          type: 'problem',
+          content: problemMatch[0]
+        })
       }
     }
 
