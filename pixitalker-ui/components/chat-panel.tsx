@@ -4,8 +4,6 @@ import { useState, useCallback } from 'react'
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { MessageSquare, User } from 'lucide-react'
-import { MicrophoneButton } from './microphone-button'
-import { openai } from '@/lib/openai'
 import { Controls } from './controls'
 
 interface Message {
@@ -23,9 +21,34 @@ export function ChatPanel() {
     }
   ])
 
+  const formatMessage = (content: string) => {
+    // Remove example tags and their content
+    content = content.replace(/<example>[\s\S]*?<\/example>/g, '')
+    // Remove problem tags and their content
+    content = content.replace(/<problem>[\s\S]*?<\/problem>/g, '')
+    // Remove any remaining XML-like tags
+    content = content.replace(/<[^>]*>/g, '')
+    // Trim whitespace and remove extra newlines
+    content = content.replace(/\n{3,}/g, '\n\n').trim()
+    return content
+  }
+
   const handleNewMessage = useCallback((message: { role: 'user' | 'teacher'; content: string }) => {
+    // Check for example tag before formatting
+    if (message.content.includes('<example>')) {
+      const exampleMatch = message.content.match(/<example>.*?<\/example>/s)
+      if (exampleMatch) {
+        window.postMessage({
+          type: 'example',
+          content: exampleMatch[0]
+        }, '*')
+      }
+    }
+
+    // Add formatted message to chat
     setMessages(prev => [...prev, {
       ...message,
+      content: formatMessage(message.content),
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }])
   }, [])
@@ -57,7 +80,7 @@ export function ChatPanel() {
                   ? "bg-gradient-to-r from-blue-100 to-purple-100 text-gray-800" 
                   : "bg-gradient-to-r from-green-400 to-emerald-400 text-white"
               )}>
-                <p>{message.content}</p>
+                <p className="whitespace-pre-wrap">{message.content}</p>
                 <span className="text-xs opacity-70">{message.timestamp}</span>
               </div>
               {message.role === 'user' && (
