@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Mic, Send, Lightbulb } from 'lucide-react'
-import { useState, useCallback, useRef } from "react"
+import { useState, useCallback, useRef, useEffect } from "react"
 
 interface ControlsProps {
   onNewMessage: (message: { role: 'user' | 'teacher'; content: string }) => void;
@@ -14,6 +14,18 @@ export function Controls({ onNewMessage }: ControlsProps) {
   const [isListening, setIsListening] = useState(false)
   const [isProcessing, setIsProcessing] = useState(false)
   const audioRef = useRef<HTMLAudioElement>(null);
+  const sessionIdRef = useRef<string>(
+    typeof window !== 'undefined' 
+      ? localStorage.getItem('chatSessionId') || crypto.randomUUID()
+      : ''
+  );
+
+  // Store sessionId in localStorage on mount
+  useEffect(() => {
+    if (sessionIdRef.current) {
+      localStorage.setItem('chatSessionId', sessionIdRef.current);
+    }
+  }, []);
 
   const processMessage = useCallback(async (content: string) => {
     if (!content.trim()) return;
@@ -24,11 +36,14 @@ export function Controls({ onNewMessage }: ControlsProps) {
       // Add user message
       onNewMessage?.({ role: 'user', content })
 
-      // Call server-side API
+      // Call server-side API with sessionId
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content })
+        body: JSON.stringify({ 
+          content,
+          sessionId: sessionIdRef.current
+        })
       });
 
       const data = await response.json();
@@ -40,15 +55,6 @@ export function Controls({ onNewMessage }: ControlsProps) {
         role: 'teacher', 
         content: data.message
       })
-
-      // Play audio response
-      if (data.audioBase64) {
-        const audio = audioRef.current;
-        if (audio) {
-          audio.src = `data:audio/mp3;base64,${data.audioBase64}`;
-          await audio.play();
-        }
-      }
       
       setMessage("")
     } catch (error) {

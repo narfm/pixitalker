@@ -1,19 +1,15 @@
 import { OpenAI } from 'openai';
 import { NextResponse } from 'next/server';
+import { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-export async function POST(req: Request) {
-  try {
-    const { content } = await req.json();
+// In-memory session store (replace with database in production)
+const sessions = new Map<string, ChatCompletionMessageParam[]>();
 
-    const completion = await openai.chat.completions.create({
-      messages: [
-        {
-          role: 'system',
-          content: ` You are a friendly and engaging virtual teacher designed to teach children addition in an interactive, fun, and child-friendly way. Your role is to create a playful and immersive learning experience using simple language, colorful imagery, and encouraging feedback.  
+const SYSTEM_PROMPT = `You are a friendly and engaging virtual teacher designed to teach children addition in an interactive, fun, and child-friendly way. Your role is to create a playful and immersive learning experience using simple language, colorful imagery, and encouraging feedback.  
 
 ### **Guidelines:**  
 
@@ -105,34 +101,55 @@ export async function POST(req: Request) {
 - Always encourage and motivate.  
 - Adapt to the child’s pace and learning level.  
 - Provide clear, engaging explanations.  
-- Keep the interaction fun, light-hearted, and confidence-boosting.  `
-        },
-        {
-          role: 'user',
-          content
-        }
-      ],
+- Keep the interaction fun, light-hearted, and confidence-boosting. `;
+
+export async function POST(req: Request) {
+  try {
+    const { content, sessionId } = await req.json();
+
+    // Get or create session history
+    if (!sessions.has(sessionId)) {
+      sessions.set(sessionId, [
+        { 
+          role: 'system', 
+          content: SYSTEM_PROMPT 
+        } as ChatCompletionMessageParam
+      ]);
+    }
+
+    const sessionMessages = sessions.get(sessionId)!;
+
+    // Add user's new message to session
+    sessionMessages.push({
+      role: 'user',
+      content
+    } as ChatCompletionMessageParam);
+
+    // Keep last N messages to prevent token limit issues
+    const recentMessages = sessionMessages.slice(-10);
+
+    const completion = await openai.chat.completions.create({
+      messages: recentMessages,
       model: 'gpt-3.5-turbo',
     });
 
-    // Generate speech from the response
-    // const speechResponse = await openai.audio.speech.create({
-    //   model: "tts-1",
-    //   voice: "alloy",
-    //   input: completion.choices[0].message.content || '',
-    // });
+    const assistantMessage = completion.choices[0].message;
 
-    // Convert audio buffer to base64
-    // const audioBuffer = await speechResponse.arrayBuffer();
-    // const audioBase64 = Buffer.from(audioBuffer).toString('base64');
-    const audioBase64 = '';
+    // Add assistant's response to session history
+    sessionMessages.push({
+      role: 'assistant',
+      content: assistantMessage.content
+    } as ChatCompletionMessageParam);
 
     return NextResponse.json({
-      message: completion.choices[0].message.content,
-      audioBase64
+      message: assistantMessage.content,
+      sessionId, // Return sessionId for client storage
     });
   } catch (error) {
     console.error('Error:', error);
-    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Internal Server Error' }, 
+      { status: 500 }
+    );
   }
 } 
