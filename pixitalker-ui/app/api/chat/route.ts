@@ -126,11 +126,17 @@ export async function POST(req: Request) {
     } as ChatCompletionMessageParam);
 
     // Keep last N messages to prevent token limit issues
-    const recentMessages = sessionMessages.slice(-10);
+    // But always include the system prompt
+    const systemPrompt = sessionMessages[0];
+    const recentMessages = [
+      systemPrompt,
+      ...sessionMessages.slice(-8) // Adjust number based on your needs
+    ];
 
     const completion = await openai.chat.completions.create({
       messages: recentMessages,
       model: 'gpt-3.5-turbo',
+      temperature: 0.7,
     });
 
     const assistantMessage = completion.choices[0].message;
@@ -141,9 +147,22 @@ export async function POST(req: Request) {
       content: assistantMessage.content
     } as ChatCompletionMessageParam);
 
+        // Generate speech from the response
+    // const speechResponse = await openai.audio.speech.create({
+    //   model: "tts-1",
+    //   voice: "alloy",
+    //   input: completion.choices[0].message.content || '',
+    // });
+
+    // Convert audio buffer to base64
+    // const audioBuffer = await speechResponse.arrayBuffer();
+    // const audioBase64 = Buffer.from(audioBuffer).toString('base64');
+    const audioBase64 = '';
+
     return NextResponse.json({
       message: assistantMessage.content,
       sessionId, // Return sessionId for client storage
+      audioBase64
     });
   } catch (error) {
     console.error('Error:', error);
