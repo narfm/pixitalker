@@ -1,7 +1,7 @@
 'use client'
 
 import { Card } from "@/components/ui/card"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { Maximize2, Minimize2, Pause, Play } from 'lucide-react'
 import { Button } from "./ui/button"
 import { MathExample } from "./MathExample"
@@ -10,35 +10,72 @@ import { MathContent } from "./types/math"
 import { parseXML } from "@/lib/xml-parser"
 import { eventEmitter } from '@/lib/event-emitter'
 
-
 export function Whiteboard() {
   const [isVisible] = useState(true)
   const [isExpanded, setIsExpanded] = useState(false)
   const [isPlaying, setIsPlaying] = useState(true)
+  const [contentQueue, setContentQueue] = useState<MathContent[]>([])
   const [currentContent, setCurrentContent] = useState<MathContent>()
+  const [key, setKey] = useState(0)
 
-  const handleComplete = () => {
-    // Toggle between example and problem
-    // setCurrentContent(currentContent.type === 'example' ? parseXML(problemXML) : parseXML(exampleXML))
-    // setIsPlaying(true)
-  }
+  const playNextContent = useCallback(() => {
+    setContentQueue(prev => {
+      if (prev.length === 0) return prev;
+      const [nextContent, ...rest] = prev;
+      setCurrentContent(nextContent);
+      setIsPlaying(true);
+      setKey(k => k + 1);
+      return rest;
+    });
+  }, []);
 
-    // Listen for messages from chat component
-    useEffect(() => {
-      const handleMathContent = (data: { type: 'example' | 'problem', content: string }) => {
-        setCurrentContent(parseXML(data.content))
+  useEffect(() => {
+    const handleMathContent = (data: { type: 'example' | 'problem', content: string }) => {
+      try {
+        console.log('Received content:', data.content);
+        const newContent = parseXML(data.content);
+        console.log('Parsed content:', newContent);
+        
+        setContentQueue(prev => {
+          const newQueue = [...prev, newContent];
+          console.log('Updated queue:', newQueue);
+          return newQueue;
+        });
+
+        if (!currentContent) {
+          console.log('No current content, playing next...');
+          setTimeout(playNextContent, 0);
+        }
+      } catch (error) {
+        console.error('Error processing math content:', error);
       }
+    };
 
-      eventEmitter.on('mathContent', handleMathContent)
-      return () => eventEmitter.off('mathContent', handleMathContent)
-    }, [])
+    eventEmitter.on('mathContent', handleMathContent);
+    return () => eventEmitter.off('mathContent', handleMathContent);
+  }, [currentContent, playNextContent]);
 
-  if (!isVisible || !currentContent) return null
+  const handleComplete = useCallback(() => {
+    setIsPlaying(false);
+    setTimeout(() => {
+      setCurrentContent(undefined);
+      playNextContent();
+    }, 1000);
+  }, [playNextContent]);
+
+  if (!isVisible || !currentContent) return null;
 
   return (
     <Card className={`absolute right-12 top-1/2 -translate-y-1/2 p-6 shadow-2xl bg-gradient-to-br from-white to-blue-50 border-4 border-blue-300 rounded-xl transition-all duration-300 ${
       isExpanded ? 'w-[800px] h-[600px]' : 'w-[500px] h-[400px]'
     }`}>
+      {contentQueue.length > 0 && (
+        <div className="absolute top-2 right-2">
+          <span className="text-sm text-purple-500 bg-purple-100 px-2 py-1 rounded-full">
+            {contentQueue.length} more
+          </span>
+        </div>
+      )}
       <div className="text-center mb-6 relative">
         <div className="absolute right-0 top-0 flex gap-2">
           <Button
@@ -75,12 +112,14 @@ export function Whiteboard() {
         <div className="relative z-10 p-6 flex flex-col items-center justify-center w-full h-full">
           {currentContent.type === 'example' ? (
             <MathExample
+              key={key}
               content={currentContent}
               isPlaying={isPlaying}
               onComplete={handleComplete}
             />
           ) : (
             <MathProblem
+              key={key}
               content={currentContent}
               isPlaying={isPlaying}
               onComplete={handleComplete}
