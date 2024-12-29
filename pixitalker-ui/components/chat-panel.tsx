@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { MessageSquare, User } from 'lucide-react'
@@ -14,6 +14,13 @@ interface Message {
 }
 
 export function ChatPanel() {
+  const messagesEndRef = useRef<HTMLDivElement>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" })
+  }
+
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'teacher',
@@ -57,12 +64,19 @@ export function ChatPanel() {
       }
     }
 
-    // Add formatted message to chat
-    setMessages(prev => [...prev, {
-      ...message,
-      content: formatMessage(message.content),
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    }])
+    // Add formatted message to chat and scroll
+    setMessages(prev => {
+      const newMessages = [...prev, {
+        ...message,
+        content: formatMessage(message.content),
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      }]
+      
+      // Scroll after state update
+      setTimeout(scrollToBottom, 100)
+      
+      return newMessages
+    })
   }, [])
 
   return (
@@ -102,9 +116,13 @@ export function ChatPanel() {
               )}
             </div>
           ))}
+          <div ref={messagesEndRef} />
         </div>
       </ScrollArea>
-      <Controls onNewMessage={handleNewMessage} />
+      <Controls 
+        onNewMessage={handleNewMessage} 
+        ref={inputRef}
+      />
     </div>
   )
 }
