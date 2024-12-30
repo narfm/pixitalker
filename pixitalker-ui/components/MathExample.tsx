@@ -13,6 +13,7 @@ interface MathExampleProps {
 export function MathExample({ content, isPlaying, onComplete }: MathExampleProps) {
   const [currentStep, setCurrentStep] = useState(0)
   const [counting, setCounting] = useState(0)
+  const [countedEmojis, setCountedEmojis] = useState<string[]>([])
 
   useEffect(() => {
     if (!isPlaying) return
@@ -22,9 +23,15 @@ export function MathExample({ content, isPlaying, onComplete }: MathExampleProps
 
     if (currentStep === 3) {
       let count = 0
+      const allEmojis = content.visuals.objects.flatMap(obj => 
+        Array(obj.count).fill(obj.emoji)
+      )
+      
       countInterval = setInterval(() => {
         count++
         setCounting(count)
+        setCountedEmojis(allEmojis.slice(0, count))
+        
         if (count >= parseInt(content.result)) {
           clearInterval(countInterval)
           timeout = setTimeout(() => {
@@ -44,7 +51,7 @@ export function MathExample({ content, isPlaying, onComplete }: MathExampleProps
       clearTimeout(timeout)
       clearInterval(countInterval)
     }
-  }, [currentStep, isPlaying, content.result, onComplete])
+  }, [currentStep, isPlaying, content.result, content.visuals.objects, onComplete])
 
   const steps = [
     {
@@ -107,7 +114,7 @@ export function MathExample({ content, isPlaying, onComplete }: MathExampleProps
     {
       title: "Let's Count",
       content: (
-        <div className="space-y-4">
+        <div className="space-y-6">
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -115,13 +122,32 @@ export function MathExample({ content, isPlaying, onComplete }: MathExampleProps
           >
             {content.explanation}
           </motion.div>
-          <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className="text-6xl font-bold text-purple-500"
-          >
-            {counting}
-          </motion.div>
+          <div className="flex flex-col items-center gap-4">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="text-6xl font-bold text-purple-500"
+            >
+              {counting}
+            </motion.div>
+            <motion.div 
+              className="flex flex-wrap justify-center gap-2 max-w-[80%]"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              {countedEmojis.map((emoji, index) => (
+                <motion.span
+                  key={index}
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ delay: 0.1 }}
+                  className="text-3xl"
+                >
+                  {emoji}
+                </motion.span>
+              ))}
+            </motion.div>
+          </div>
         </div>
       )
     },

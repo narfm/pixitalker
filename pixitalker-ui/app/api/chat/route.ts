@@ -82,9 +82,24 @@ const SYSTEM_PROMPT = `You are a friendly and engaging virtual teacher designed 
     Start with 6 puppies and count 4 more!  
   </hint>  
   <expected_interaction>  
-    Count the puppies or say the answer out loud.  
+    Choose the correct option and show the result based on the user's choice.  
   </expected_interaction>  
+  <options>  
+    <option value="10" is_correct="true">  
+      <response>Great job! That's correct. There are 10 puppies in total!</response>  
+      <action>Show a happy animation with puppies celebrating.</action>  
+    </option>  
+    <option value="8" is_correct="false">  
+      <response>Not quite. Remember, there were 6 puppies, and 4 more joined. Try again!</response>  
+      <action>Highlight the operation and hint for the user to review.</action>  
+    </option>  
+    <option value="12" is_correct="false">  
+      <response>Oops, that's too many puppies! Count carefully and try again.</response>  
+      <action>Show a visual of counting the puppies step by step.</action>  
+    </option>  
+  </options>  
 </problem>
+
  
 
 
