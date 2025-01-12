@@ -7,6 +7,7 @@ export interface VisualAction {
   type: string
   rows?: VisualRow[]
   objects?: MathObject[]
+  groups?: VisualGroup[]
 }
 
 export interface VisualRow {
@@ -81,5 +82,15 @@ export type MathContent = MathExample | MathProblem;
 export interface MultiplicationVisuals {
   initialObjects: MathObject[]
   action: DuplicateAction
+}
+
+export interface VisualGroup {
+  count: number
+  objects: MathObject[]
+}
+
+export interface DivideAction {
+  type: 'divide'
+  groups: VisualGroup[]
 }
 

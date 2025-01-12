@@ -50,7 +50,37 @@ class MathAgentFactory {
     1. Adding operation-specific explanations and steps
     2. Maintaining consistency with the teacher's scenario`;
 
-    const divisionExampleFormat = ``;
+    const divisionExampleFormat = `
+{
+  "setup": "You have 6 🍕 slices, and you want to share them equally among 2 friends.",
+  "visuals": {
+    "objects": [
+      {
+        "emoji": "🍕",
+        "count": 6
+      }
+    ],
+    "action": {
+      "type": "divide",
+      "groups": [
+        {
+          "count": 2,
+          "objects": [
+            {
+              "emoji": "🍕",
+              "count": 3
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "operation": "Divide the total number of pizza slices (6) by the number of friends (2).",
+  "explanation": "Let’s divide the pizza slices equally! Start with 6 slices: 1, 2, 3, 4, 5, 6. Now, share them into 2 groups: Group 1 gets 1, 2, 3 slices and Group 2 gets 4, 5, 6 slices. Each group has 3 slices.",
+  "result": "The result of dividing 6 pizza slices among 2 friends is 3 slices per friend."
+}
+`;
+
 
     const multiplicationExampleFormat = `
     {

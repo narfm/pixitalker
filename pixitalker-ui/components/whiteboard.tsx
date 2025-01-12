@@ -12,6 +12,7 @@ import { MathContent } from "./types/math"
 import { parseMathContent } from "@/lib/math-parser"
 import { SubtractionExample } from "./SubtractionExample"
 import { MultiplicationExample } from "./MultiplicationExample"
+import { DivisionExample } from "./DivisionExample"
 
 
 export function Whiteboard() {
@@ -118,7 +119,13 @@ export function Whiteboard() {
       <div className="flex flex-col items-center justify-center h-[calc(100%-8rem)] bg-white rounded-xl border-4 border-dashed border-purple-300 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-yellow-100 to-pink-100 opacity-50" />
         <div className="relative z-10 p-6 flex flex-col items-center justify-center w-full h-full">
-        {currentContent.type === 'example' && (currentContent.visuals.action?.type === 'duplicate' || currentContent.visuals.action?.type === 'arrange') ? (
+        {currentContent.type === 'example' && currentContent.visuals.action?.type === 'divide' ? (
+            <DivisionExample
+              content={currentContent}
+              isPlaying={isPlaying}
+              onComplete={handleComplete}
+            />
+          ) : currentContent.type === 'example' && (currentContent.visuals.action?.type === 'duplicate' || currentContent.visuals.action?.type === 'arrange') ? (
             <MultiplicationExample
               content={currentContent}
               isPlaying={isPlaying}
