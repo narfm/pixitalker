@@ -11,10 +11,17 @@ export const parseMathContent = (type: string, json: any): MathContent => {
     // Convert visuals array to the correct format and include actions with their objects if present
     const visuals = {
       objects: Array.isArray(json.visuals.objects) ? json.visuals.objects : [],
-      action: json.visuals.action ? {
-        type: json.visuals.action.type || '',
-        objects: Array.isArray(json.visuals.action.objects) ? json.visuals.action.objects : []
-      } : null
+      action: json.visuals.action
+        ? {
+            type: json.visuals.action.type || '',
+            rows: Array.isArray(json.visuals.action.rows)
+              ? json.visuals.action.rows.map((row: { count: any; objects: any; }) => ({
+                  count: row.count || 0,
+                  objects: Array.isArray(row.objects) ? row.objects : []
+                }))
+              : []
+          }
+        : null
     };
 
     if (type === 'example') {
@@ -25,7 +32,7 @@ export const parseMathContent = (type: string, json: any): MathContent => {
         operation: json.operation || '',
         explanation: json.explanation || '',
         result: json.result?.toString() || ''
-      } as MathExample
+      } as MathExample;
     }
 
     return {

@@ -1,18 +1,35 @@
 export interface MathObject {
   emoji: string
-  count: string
+  count: number | string
 }
 
 export interface VisualAction {
-  type: 'remove' | 'add'
+  type: string
+  rows?: VisualRow[]
+  objects?: MathObject[]
+}
+
+export interface VisualRow {
+  count: number
+  objects: MathObject[]
+}
+
+export interface DuplicateAction {
+  type: 'duplicate'
+  rows: VisualRow[]
+}
+
+export interface RemoveAction {
+  type: 'remove'
   objects: MathObject[]
 }
 
 export interface BaseContent {
   setup: string
   visuals: {
-    objects: MathObject[]
+    objects?: MathObject[]
     action?: VisualAction
+    initialObjects?: MathObject[]
   }
   operation: string
 }
@@ -60,4 +77,9 @@ export interface Message {
 
 export type MathContent = MathExample | MathProblem;
 
+
+export interface MultiplicationVisuals {
+  initialObjects: MathObject[]
+  action: DuplicateAction
+}
 

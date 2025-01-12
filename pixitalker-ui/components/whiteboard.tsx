@@ -11,6 +11,8 @@ import { eventEmitter } from '@/lib/event-emitter'
 import { MathContent } from "./types/math"
 import { parseMathContent } from "@/lib/math-parser"
 import { SubtractionExample } from "./SubtractionExample"
+import { MultiplicationExample } from "./MultiplicationExample"
+
 
 export function Whiteboard() {
   const [isVisible] = useState(true)
@@ -36,7 +38,9 @@ export function Whiteboard() {
       try {
         console.log('Received content:', data);
         // const newContent = parseXML(data.content);
-        const newContent = parseMathContent(data.content.type, data.content.content);
+        // const newContent = parseMathContent(data.content.type, data.content.content);
+        let newContent = data.content.content;
+        newContent.type = data.content.type;
         
         console.log('Parsed content:', newContent);
         
@@ -114,7 +118,14 @@ export function Whiteboard() {
       <div className="flex flex-col items-center justify-center h-[calc(100%-8rem)] bg-white rounded-xl border-4 border-dashed border-purple-300 relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-yellow-100 to-pink-100 opacity-50" />
         <div className="relative z-10 p-6 flex flex-col items-center justify-center w-full h-full">
-        {currentContent.type === 'example' && currentContent.visuals.action?.type === 'remove' ? (
+        {currentContent.type === 'example' && (currentContent.visuals.action?.type === 'duplicate' || currentContent.visuals.action?.type === 'arrange') ? (
+            <MultiplicationExample
+              content={currentContent}
+              isPlaying={isPlaying}
+              onComplete={handleComplete}
+            />
+          ) : currentContent.type === 'example' && currentContent.visuals.action?.type === 'remove' ? (
+            
             <SubtractionExample
             key={key}
               content={currentContent}

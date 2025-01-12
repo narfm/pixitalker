@@ -50,6 +50,39 @@ class MathAgentFactory {
     1. Adding operation-specific explanations and steps
     2. Maintaining consistency with the teacher's scenario`;
 
+    const divisionExampleFormat = ``;
+
+    const multiplicationExampleFormat = `
+    {
+  "setup": "You have 3 🍎, and you arrange them into 2 rows. Each row has 3 🍎.",
+  "visuals": {
+    "objects": [
+      {
+        "emoji": "🍎",
+        "count": 3
+      }
+    ],
+    "action": {
+      "type": "duplicate",
+      "rows": [
+        {
+          "count": 2,
+          "objects": [
+            {
+              "emoji": "🍎",
+              "count": 3
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "operation": "Multiply the number of apples in each row (3) by the number of rows (2).",
+  "explanation": "Let’s calculate! There are 3 apples in the first row: 1, 2, 3. Now, the second row also has 3 apples: 1, 2, 3. Let's count all the apples together: 1, 2, 3, 4, 5, 6! That makes 6 apples in total.",
+  "result": "The result of multiplying 3 apples in 2 rows is 6 apples."
+}
+`;
+
     const subtractionExampleFormat = `
     { 
       "setup": "You have 5 🍪 on a plate, and you eat 2 🍪.", 
@@ -117,7 +150,26 @@ class MathAgentFactory {
       ]
     }`;
 
-    const mathOperationReletedPrompt = operation === 'addition' ? additionExampleFormat : subtractionExampleFormat;
+    let mathOperationReletedPrompt;
+
+    switch (operation) {
+      case 'addition':
+        mathOperationReletedPrompt = additionExampleFormat;
+        break;
+      case 'subtraction':
+        mathOperationReletedPrompt = subtractionExampleFormat;
+        break;
+      case 'multiplication':
+        mathOperationReletedPrompt = multiplicationExampleFormat;
+        break;
+      case 'division':
+        mathOperationReletedPrompt = divisionExampleFormat;
+        break;
+      default:
+        mathOperationReletedPrompt = null; // or a default value if needed
+        break;
+    }
+
 
     return `${basePrompt}\n\nEnhance this structure:\n${task === 'example' ? mathOperationReletedPrompt : problemFormat}`;
   }
