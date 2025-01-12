@@ -1,27 +1,12 @@
 export interface MathObject {
-  emoji: string;
-  count: number;
-  text?: string;
-}
-
-export interface MathSetup {
-  objects: MathObject[];
-}
-
-export interface MathVisuals {
-  objects: MathObject[];
+  emoji: string
+  count: string
 }
 
 export interface BaseContent {
-  setup: {
-    objects: Array<{
-      emoji: string
-      count: number
-      text: string
-    }>
-  }
+  setup: string
   visuals: {
-    objects: Array<MathObject>
+    objects: MathObject[]
   }
   operation: string
 }
@@ -40,11 +25,33 @@ export interface MathProblem extends BaseContent {
   options: MathOption[]
 }
 
-export type MathContent = MathExample | MathProblem;
-  
 export interface MathOption {
   value: string
   is_correct: boolean
   response: string
   action: string
 }
+
+export interface ChatMessage {
+  message: string
+}
+
+export interface WhiteboardContent {
+  type: string
+  content: string
+}
+
+export interface MessageContent {
+  chat: ChatMessage
+  whiteboard?: WhiteboardContent
+}
+
+export interface Message {
+  role: 'user' | 'teacher'
+  content: MessageContent
+  timestamp: string
+}
+
+export type MathContent = MathExample | MathProblem;
+
+

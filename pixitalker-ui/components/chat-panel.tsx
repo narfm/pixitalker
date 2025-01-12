@@ -9,7 +9,7 @@ import { eventEmitter } from '@/lib/event-emitter'
 
 interface Message {
   role: 'user' | 'teacher'
-  content: string
+  content: string | any
   timestamp: string
 }
 
@@ -29,54 +29,45 @@ export function ChatPanel() {
     }
   ])
 
-  const formatMessage = (content: string) => {
-    // Remove example tags and their content
-    content = content.replace(/<example>[\s\S]*?<\/example>/g, '')
-    // Remove problem tags and their content
-    content = content.replace(/<problem>[\s\S]*?<\/problem>/g, '')
-    // Remove any remaining XML-like tags
-    content = content.replace(/<[^>]*>/g, '')
-    // Trim whitespace and remove extra newlines
-    content = content.replace(/\n{3,}/g, '\n\n').trim()
-    return content
-  }
-
-  const handleNewMessage = useCallback((message: { role: 'user' | 'teacher'; content: string }) => {
-    // Check for example tag
-    if (message.content.includes('<example>')) {
-      const exampleMatch = message.content.match(/<example>[\s\S]*?<\/example>/g)
-      if (exampleMatch) {
-        eventEmitter.emit('mathContent', {
-          type: 'example',
-          content: exampleMatch[0]
+  const handleNewMessage = useCallback((message: { role: 'user' | 'teacher'; content: string | any }) => {
+    // If content is a JSON response, handle it accordingly
+    if (typeof message.content === 'object') {
+      // Handle chat message if present
+      if (message.content.chat?.message) {
+        setMessages(prev => {
+          const newMessages = [...prev, {
+            role: 'teacher' as const,
+            content: message.content.chat.message,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }]
+          setTimeout(scrollToBottom, 100)
+          return newMessages
         })
       }
-    }
 
-    // Check for problem tag
-    if (message.content.includes('<problem>')) {
-      const problemMatch = message.content.match(/<problem>[\s\S]*?<\/problem>/g)
-      if (problemMatch) {
+      // Handle whiteboard content if present
+      if (message.content.whiteboard) {
         eventEmitter.emit('mathContent', {
-          type: 'problem',
-          content: problemMatch[0]
+          content: message.content.whiteboard
         })
       }
-    }
 
-    // Add formatted message to chat and scroll
-    setMessages(prev => {
-      const newMessages = [...prev, {
-        ...message,
-        content: formatMessage(message.content),
-        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }]
-      
-      // Scroll after state update
-      setTimeout(scrollToBottom, 100)
-      
-      return newMessages
-    })
+      // Handle achievements if present
+      if (message.content.achievements) {
+        eventEmitter.emit('achievements', message.content.achievements)
+      }
+    } else {
+      // Handle regular text messages (e.g., user input)
+      setMessages(prev => {
+        const newMessages = [...prev, {
+          ...message,
+          content: message.content,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }]
+        setTimeout(scrollToBottom, 100)
+        return newMessages
+      })
+    }
   }, [])
 
   return (

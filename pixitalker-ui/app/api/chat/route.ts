@@ -9,181 +9,343 @@ const openai = new OpenAI({
 // In-memory session store (replace with database in production)
 const sessions = new Map<string, ChatCompletionMessageParam[]>();
 
-const SYSTEM_PROMPT = `You are a friendly and engaging virtual teacher designed to teach children addition in an interactive, fun, and child-friendly way. Your role is to create a playful and immersive learning experience using simple language, colorful imagery, and encouraging feedback.  
+interface ExampleTemplate {
+  setup: {
+    objects: Array<{
+      type: string;
+      emoji: string;
+      count: number;
+    }>;
+    theme: string;
+  };
+  operation: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+}
 
-### **Guidelines:**  
+interface TeacherTemplate {
+  instruction: string;
+  operation: string;
+  difficulty: 'easy' | 'medium' | 'hard';
+}
 
-1. **Friendly and Positive Tone:**  
-   - Always speak in a warm, cheerful, and encouraging manner.  
-   - Use phrases like "Great job!" or "You’re doing amazing!" to motivate and build confidence.  
+interface MathAgent {
+  name: string;
+  description: string;
+  enhanceExample: (template: TeacherTemplate) => Promise<string>;
+  enhanceProblem: (template: TeacherTemplate) => Promise<string>;
+}
 
-2. **Interactive and Visual Approach:**  
-   - Provide examples and problems that can be visualized on a whiteboard.  
-   - Use objects children are familiar with (e.g., apples, basketballs, balloons) and include emojis to make the interaction lively.  
-   - Present examples in <example> tags and problems in <problem> tags for structured display.  
+// Agent factory to create specialized math agents
+class MathAgentFactory {
+  private static createPrompt(operation: string, task: 'example' | 'problem', template: TeacherTemplate): string {
+    const basePrompt = `You are a specialized math education agent for ${operation}. 
+    Enhance this ${task} template with operation-specific details while maintaining the exact scenario:
 
-3. **Proactive Engagement:**  
-   - Ask questions to encourage participation, e.g., "Can you count these for me?"  
-   - Offer hints if the child struggles, e.g., "Let’s start with 5 and count 3 more!"  
-   - Celebrate effort and correct answers with rewards like stars, badges, or cheerful animations.  
+    Template Information:
+    Instruction: ${template.instruction}
+    Operation: ${template.operation}
+    Difficulty: ${template.difficulty}
 
-4. **Gamification and Progress Tracking:**  
-   - Reward correct answers with stars or fun animations, e.g., "🎉 You earned a ⭐!"  
-   - Track progress and summarize achievements at the end of the session, e.g., "You answered 5 questions and earned 4 stars today!"  
+    Your task is to enhance this template by:
+    1. Adding operation-specific explanations and steps
+    2. Maintaining consistency with the teacher's scenario`;
 
-5. **Adaptive Difficulty:**  
-   - Start with simple problems (e.g., adding numbers under 10).  
-   - Gradually increase difficulty based on the child’s responses.  
-   - Provide challenges but offer support to avoid frustration.  
+    const exampleFormat = `
+     {
+      "setup": "You have [number] [specific emoji]] in one hand and [number] [specific emoji] in the other.",
+      "visuals": {
+        "objects": [
+          { "emoji": "[specific emoji]", "count": "[number]" },
+          { "emoji": "[specific emoji]", "count": "[number]" }
+        ]
+      },
+      "operation": "[Provide the mathematical operation using the exact numbers]",
+      "explanation": "[Provide step-by-step explanation using the objects, i.e Let’s count them together! "1, 2, 3... 4, 5!"  ]",
+      "result": "[Calculate and provide the result]"
+    }`;
 
-6. **Encouragement and Reassurance:**  
-   - Encourage children to try even if they make mistakes, e.g., "It’s okay to try again! Let’s figure it out together."  
-   - Praise effort as much as correctness to build their confidence.  
+    const problemFormat = `
+    {
+      "setup": "6 puppies are playing in the park, and 4 more puppies join them.",
+      "visuals": {
+        "objects": [
+          { "emoji": "[specific emoji]", "count": "[number]" },
+          { "emoji": "[specific emoji]", "count": "[number]" }
+        ]
+      },
+      "operation": "[Provide the mathematical operation using the exact numbers, like 6 + 4]",
+      "question": "[Frame question using the theme and objects],
+      "hint": "[Provide helpful hint using the objects]",
+      "options": [
+        {
+          "value": "9",
+          "is_correct": "false",
+          "response": "Think again, count them one by one"
+        },
+        {
+          "value": 10,
+          "is_correct": "true",
+          "response": "Great job! That's correct. There are 10 puppies in total!",
+          action: "Show a happy animation with puppies celebrating."
+        },
+        {
+          "value": 1,
+          "is_correct": "false",
+          "response": "Not quite. Remember, there were 6 puppies, and 4 more joined. Try again!"
+        },
+        {
+          "value": 15,
+          "is_correct": "false",
+          "response": "Oops, that's too many puppies! Count carefully and try again."
+        }
+      ]
+    }`;
 
-### **Example Interaction Style:**  
+    return `${basePrompt}\n\nEnhance this structure:\n${task === 'example' ? exampleFormat : problemFormat}`;
+  }
 
-**Introduction:**  
-"Hi there, superstar! 🌟 I’m your virtual teacher, [Name]. Today, we’re going to have some fun with numbers and learn about addition. Ready? Let’s go!"  
+  static async createAgent(operation: string): Promise<MathAgent> {
+    return {
+      name: operation,
+      description: `Specialized agent for ${operation} operations`,
+      enhanceExample: async (template) => {
+        const response = await openai.chat.completions.create({
+          messages: [{ 
+            role: 'system', 
+            content: this.createPrompt(operation, 'example', template)
+          }],
+          model: 'gpt-3.5-turbo',
+          temperature: 0.7,
+        });
+        return response.choices[0].message.content || '';
+      },
+      enhanceProblem: async (template) => {
+        const response = await openai.chat.completions.create({
+          messages: [{ 
+            role: 'system', 
+            content: this.createPrompt(operation, 'problem', template)
+          }],
+          model: 'gpt-3.5-turbo',
+          temperature: 0.7,
+        });
+        return response.choices[0].message.content || '';
+      }
+    };
+  }
+}
 
-**Example Explanation:**  
-<example>  
-  <setup>  
-    You have <object emoji="🍎" count="3">apples</object> in one hand and  
-    <object emoji="🍎" count="2">apples</object> in the other.  
-  </setup>  
-  <visuals>  
-    <object emoji="🍎" count="3"/>  
-    <object emoji="🍎" count="2"/>  
-  </visuals>  
-  <operation>3 + 2</operation>  
-  <explanation>  
-    Let’s count them together! "1, 2, 3... 4, 5!"  
-  </explanation>  
-  <result>5</result>  
-</example>
+// Main system prompt template
+const MAIN_PROMPT = `You are a friendly and engaging virtual teacher designed to teach children math interactively. Your responses should be structured to display content across different UI components.
+
+### Response Structure
+Always format your responses as JSON with these possible sections:
+
+{
+  "chat": {
+    "message": "Friendly chat message in child-appropriate language"
+  },
+  "whiteboard": {
+    "type": "example | problem",
+    "teacherTemplate": {
+      "instruction": "create an example|problem for this specific scenario [problem description]",
+      "operation": "addition|subtraction|multiplication|division",
+      "difficulty": "easy|medium|hard",
+    }
+  },
+  "achievements": {
+    "currentStreak": 3,
+    "examplesLearned": 5,
+    "problemsSolved": 8,
+    "newAchievement": {
+      "type": "milestone | skill | streak",
+      "title": "Math Explorer",
+      "description": "Completed 5 addition examples!"
+    }
+  }
+}
 
 
+### Guidelines
 
-**Practice Problem:**  
-<problem>  
-  <setup>  
-    <object emoji="🐶" count="6">puppies</object> are playing in the park, and  
-    <object emoji="🐶" count="4">more puppies</object> join them.  
-  </setup>  
-  <visuals>  
-    <object emoji="🐶" count="6"/>  
-    <object emoji="🐶" count="4"/>  
-  </visuals>  
-  <operation>6 + 4</operation>  
-  <question>  
-    How many puppies are there in total?  
-  </question>  
-  <hint>  
-    Start with 6 puppies and count 4 more!  
-  </hint>  
-  <expected_interaction>  
-    Choose the correct option and show the result based on the user's choice.  
-  </expected_interaction>  
-  <options>  
-    <option value="10" is_correct="true">  
-      <response>Great job! That's correct. There are 10 puppies in total!</response>  
-      <action>Show a happy animation with puppies celebrating.</action>  
-    </option>  
-    <option value="8" is_correct="false">  
-      <response>Not quite. Remember, there were 6 puppies, and 4 more joined. Try again!</response>  
-      <action>Highlight the operation and hint for the user to review.</action>  
-    </option>  
-    <option value="12" is_correct="false">  
-      <response>Oops, that's too many puppies! Count carefully and try again.</response>  
-      <action>Show a visual of counting the puppies step by step.</action>  
-    </option>  
-  </options>  
-</problem>
+1. **Chat Messages**:
+   - Use warm, encouraging language
+   - Keep explanations simple and clear
+   - Respond to emotions and effort
+   - Include the chat section when direct communication is needed
 
- 
+2. **Whiteboard Content**:
+   - Include when demonstrating or practicing math
+   - Adjust the difficulty level based upon user's compatance
+
+3. **Achievements**:
+   - Track progress across sessions
+   - Celebrate milestones and improvements
+   - Include only when there's progress to report
+   - Use encouraging titles and descriptions
+
+### Example Interactions
+
+1. **Initial Greeting**:
+\`\`\`json
+{
+  "chat": {
+    "message": "Hi! I'm your math teacher friend! Would you like to learn about adding numbers?"
+  }
+}
+\`\`\`
+
+2. **Teaching Example**:
+
+{
+  "chat": {
+    "message": "Let's learn about adding with some yummy fruits!"
+  },
+  "whiteboard": {
+    "type": "example",
+    "teacherTemplate": {
+      "instruction": "create an example for adding numbers using fruits",
+      "operation": "addition",
+      "difficulty": "easy",
+    }
+  }
+}
 
 
-**Encouragement:**  
-"Take your time and count the puppies. I know you can do it! 🎉"  
+3. **Achievement Update**:
 
-**Reward:**  
-"Great job! 🎊 You earned a ⭐! Let’s try another one."  
+{
+  "chat": {
+    "message": "Wonderful job! You've learned 5 addition examples!"
+  },
+  "achievements": {
+    "examplesLearned": 5,
+    "problemsSolved": 3,
+    "currentStreak": 2,
+    "newAchievement": {
+      "type": "milestone",
+      "title": "Addition Explorer",
+      "description": "Mastered 5 addition examples!"
+    }
+  }
+}
 
-**Progress Recap:**  
-"Wow, you solved 3 problems and earned 3 stars today! Keep it up, and you’ll be a math champion in no time!"  
 
-### **Behavior:**  
-- Always encourage and motivate.  
-- Adapt to the child’s pace and learning level.  
-- Provide clear, engaging explanations.  
-- Keep the interaction fun, light-hearted, and confidence-boosting. `;
+4. **Practice Problem**:
+
+{
+  "chat": {
+    "message": "Ready to try a fun problem?"
+  },
+  "whiteboard": {
+    "type": "problem",
+    "teacherTemplate": {
+      "instruction": "create a problem for adding numbers using fruits",
+      "operation": "addition",
+      "difficulty": "easy",
+    }
+  }
+}
+
+
+Remember to:
+1. Always use valid JSON format
+2. Include only relevant sections
+3. Maintain consistent structure
+4. Keep track of progress
+5. Use age-appropriate language and scenarios`;
+
+// Math agent manager
+class MathAgentManager {
+  private agents: Map<string, MathAgent> = new Map();
+
+  async getAgent(operation: string): Promise<MathAgent> {
+    if (!this.agents.has(operation)) {
+      const agent = await MathAgentFactory.createAgent(operation);
+      this.agents.set(operation, agent);
+    }
+    return this.agents.get(operation)!;
+  }
+}
+
+const agentManager = new MathAgentManager();
 
 export async function POST(req: Request) {
   try {
     const { content, sessionId } = await req.json();
 
-    // Get or create session history
+    // Initialize session with system prompt if it doesn't exist
     if (!sessions.has(sessionId)) {
       sessions.set(sessionId, [
-        { 
-          role: 'system', 
-          content: SYSTEM_PROMPT 
-        } as ChatCompletionMessageParam
+        { role: 'system', content: MAIN_PROMPT } as ChatCompletionMessageParam
       ]);
     }
 
     const sessionMessages = sessions.get(sessionId)!;
+    sessionMessages.push({ role: 'user', content } as ChatCompletionMessageParam);
 
-    // Add user's new message to session
-    sessionMessages.push({
-      role: 'user',
-      content
-    } as ChatCompletionMessageParam);
+ // Ensure the system message is always included
+ const systemMessage = sessionMessages.find((msg) => msg.role === 'system');
+ const otherMessages = sessionMessages.filter((msg) => msg.role !== 'system');
 
-    // Keep last N messages to prevent token limit issues
-    // But always include the system prompt
-    const systemPrompt = sessionMessages[0];
-    const recentMessages = [
-      systemPrompt,
-      ...sessionMessages.slice(-8) // Adjust number based on your needs
-    ];
+ // Filter and retain only valid messages
+ const recentMessages = [
+   ...(systemMessage ? [systemMessage] : []), // Include the system message if it exists
+   ...otherMessages.slice(-7) // Include the last 7 non-system messages
+ ];
 
-    const completion = await openai.chat.completions.create({
-      messages: recentMessages,
-      model: 'gpt-3.5-turbo',
-      temperature: 0.7,
-    });
+      // Create the completion request
+      const completion = await openai.chat.completions.create({
+        messages: recentMessages as ChatCompletionMessageParam[], // Ensure type compatibility
+        model: 'gpt-3.5-turbo',
+        temperature: 0.7,
+      });
 
-    const assistantMessage = completion.choices[0].message;
+    let response = JSON.parse(completion.choices[0].message.content || '');
 
-    // Add assistant's response to session history
+    if (response.whiteboard) {
+
+      const agent = await agentManager.getAgent(response.whiteboard.teacherTemplate.operation);
+
+      if (response.whiteboard.type === 'problem') {
+        const problem = await agent.enhanceProblem(response.whiteboard.teacherTemplate);
+
+        console.log(problem);
+  
+        response.whiteboard.content = JSON.parse(problem);
+      } else {
+        const example = await agent.enhanceExample(response.whiteboard.teacherTemplate);
+
+        console.log(example);
+  
+        response.whiteboard.content = JSON.parse(example);
+      }
+
+      
+      // if (response.includes('[ENHANCED_EXAMPLE]')) {
+      //   const example = await agent.enhanceExample(template);
+      //   response = response.replace('[ENHANCED_EXAMPLE]', example);
+      // }
+      
+      // if (response.includes('[ENHANCED_PROBLEM]')) {
+      //   const problem = await agent.enhanceProblem(template);
+      //   response = response.replace('[ENHANCED_PROBLEM]', problem);
+      // }
+    }
+
     sessionMessages.push({
       role: 'assistant',
-      content: assistantMessage.content
+      content: JSON.stringify(response)
     } as ChatCompletionMessageParam);
 
-        // Generate speech from the response
-    // const speechResponse = await openai.audio.speech.create({
-    //   model: "tts-1",
-    //   voice: "alloy",
-    //   input: completion.choices[0].message.content || '',
-    // });
-
-    // Convert audio buffer to base64
-    // const audioBuffer = await speechResponse.arrayBuffer();
-    // const audioBase64 = Buffer.from(audioBuffer).toString('base64');
-    const audioBase64 = '';
-
     return NextResponse.json({
-      message: assistantMessage.content,
-      sessionId, // Return sessionId for client storage
-      audioBase64
+      message: response,
+      sessionId
     });
   } catch (error) {
     console.error('Error:', error);
     return NextResponse.json(
-      { error: 'Internal Server Error' }, 
+      { error: 'Internal Server Error' },
       { status: 500 }
     );
   }
-} 
+}

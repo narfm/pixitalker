@@ -65,14 +65,14 @@ export const Controls = forwardRef<HTMLInputElement, ControlsProps>(
 
         if (!response.ok) throw new Error(data.error);
 
-        // Add AI response
+        // Add AI response with structured content
         onNewMessage?.({ 
           role: 'teacher', 
-          content: data.message
+          content: data.message // This will be the JSON object
         })
         
         setMessage("")
-        await handleComplete() // Wait for completion
+        await handleComplete()
       } catch (error) {
         console.error('Error processing message:', error)
       } finally {

@@ -24,7 +24,7 @@ export function MathExample({ content, isPlaying, onComplete }: MathExampleProps
     if (currentStep === 3) {
       let count = 0
       const allEmojis = content.visuals.objects.flatMap(obj => 
-        Array(obj.count).fill(obj.emoji)
+        Array(parseInt(obj.count)).fill(obj.emoji)
       )
       
       countInterval = setInterval(() => {
@@ -32,7 +32,8 @@ export function MathExample({ content, isPlaying, onComplete }: MathExampleProps
         setCounting(count)
         setCountedEmojis(allEmojis.slice(0, count))
         
-        if (count >= parseInt(content.result)) {
+        const totalCount = content.visuals.objects.reduce((acc, obj) => acc + parseInt(obj.count), 0)
+        if (count >= totalCount) {
           clearInterval(countInterval)
           timeout = setTimeout(() => {
             setCurrentStep(prev => prev + 1)
@@ -51,7 +52,7 @@ export function MathExample({ content, isPlaying, onComplete }: MathExampleProps
       clearTimeout(timeout)
       clearInterval(countInterval)
     }
-  }, [currentStep, isPlaying, content.result, content.visuals.objects, onComplete])
+  }, [currentStep, isPlaying, content, onComplete])
 
   const steps = [
     {
@@ -61,14 +62,8 @@ export function MathExample({ content, isPlaying, onComplete }: MathExampleProps
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-xl text-purple-600"
-        >
-          {content.setup.objects.map((obj, i) => (
-            <span key={i}>
-              {i > 0 && " and "}
-              {obj.count} {obj.emoji}
-            </span>
-          ))}
-        </motion.div>
+          dangerouslySetInnerHTML={{ __html: content.setup }}
+        />
       )
     },
     {
@@ -83,12 +78,12 @@ export function MathExample({ content, isPlaying, onComplete }: MathExampleProps
               transition={{ delay: groupIndex * 0.3 }}
               className="flex gap-2"
             >
-              {[...Array(obj.count)].map((_, i) => (
+              {[...Array(parseInt(obj.count))].map((_, i) => (
                 <motion.div
                   key={i}
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  transition={{ delay: (groupIndex * obj.count + i) * 0.2 }}
+                  transition={{ delay: (groupIndex * parseInt(obj.count) + i) * 0.2 }}
                   className="text-4xl"
                 >
                   {obj.emoji}
@@ -107,7 +102,7 @@ export function MathExample({ content, isPlaying, onComplete }: MathExampleProps
           animate={{ scale: 1 }}
           className="text-4xl font-bold text-purple-500"
         >
-          {content.operation} = ?
+          {content.operation}
         </motion.div>
       )
     },
@@ -160,7 +155,7 @@ export function MathExample({ content, isPlaying, onComplete }: MathExampleProps
           className="space-y-4"
         >
           <div className="text-4xl font-bold text-purple-500">
-            {content.operation} = {content.result}
+            {content.result}
           </div>
           <motion.div
             initial={{ opacity: 0 }}

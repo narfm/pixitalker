@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { MathProblem } from "@/types/math"
 import { Button } from "./ui/button"
 import { ChevronLeft, ChevronRight, Lightbulb } from 'lucide-react'
 import confetti from 'canvas-confetti'
+import type { MathProblem } from "./types/math"
 
 interface MathProblemProps {
   content: MathProblem
@@ -22,6 +22,20 @@ export function MathProblem({ content, isPlaying, onComplete }: MathProblemProps
   const [showCountingAnimation, setShowCountingAnimation] = useState(false)
   const [currentCount, setCurrentCount] = useState(0)
   const countingRef = useRef<NodeJS.Timeout | null>(null)
+
+  // Ensure content has all required properties with default values
+  const safeContent: MathProblem = {
+    type: 'problem',
+    setup: content?.setup || '',
+    visuals: {
+      objects: content?.visuals?.objects || []
+    },
+    operation: content?.operation || '',
+    question: content?.question || '',
+    hint: content?.hint || '',
+    expected_interaction: content?.expected_interaction || '',
+    options: content?.options || []
+  }
 
   useEffect(() => {
     if (!isPlaying) return
@@ -41,7 +55,7 @@ export function MathProblem({ content, isPlaying, onComplete }: MathProblemProps
     if (action.includes("counting")) {
       setShowCountingAnimation(true)
       let count = 0
-      const totalCount = content.visuals.objects.reduce((acc, obj) => acc + obj.count, 0)
+      const totalCount = safeContent.visuals.objects.reduce((acc, obj) => acc + parseInt(obj.count), 0)
       
       countingRef.current = setInterval(() => {
         count++
@@ -63,7 +77,7 @@ export function MathProblem({ content, isPlaying, onComplete }: MathProblemProps
   const handleOptionSelect = (value: string) => {
     setSelectedOption(value)
     setShowResponse(true)
-    const option = content.options.find(opt => opt.value === value)
+    const option = safeContent.options.find(opt => opt.value === value)
     if (option) {
       setIsCorrect(option.is_correct)
       performAction(option.action)
@@ -87,12 +101,7 @@ export function MathProblem({ content, isPlaying, onComplete }: MathProblemProps
           animate={{ opacity: 1, y: 0 }}
           className="text-xl text-purple-600"
         >
-          {content.setup.objects.map((obj, i) => (
-            <span key={i}>
-              {i > 0 && " and "}
-              {obj.count} {obj.emoji}
-            </span>
-          ))}
+          {safeContent.setup}
         </motion.div>
       )
     },
@@ -100,7 +109,7 @@ export function MathProblem({ content, isPlaying, onComplete }: MathProblemProps
       title: "Let's Visualize",
       content: (
         <motion.div className="flex justify-center gap-8">
-          {content.visuals.objects.map((obj, groupIndex) => (
+          {safeContent.visuals.objects.map((obj, groupIndex) => (
             <motion.div
               key={groupIndex}
               initial={{ scale: 0 }}
@@ -108,12 +117,12 @@ export function MathProblem({ content, isPlaying, onComplete }: MathProblemProps
               transition={{ delay: groupIndex * 0.3 }}
               className="flex gap-2"
             >
-              {[...Array(obj.count)].map((_, i) => (
+              {[...Array(parseInt(obj.count))].map((_, i) => (
                 <motion.div
                   key={i}
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  transition={{ delay: (groupIndex * obj.count + i) * 0.2 }}
+                  transition={{ delay: (groupIndex * parseInt(obj.count) + i) * 0.2 }}
                   className="text-4xl"
                 >
                   {obj.emoji}
@@ -134,14 +143,14 @@ export function MathProblem({ content, isPlaying, onComplete }: MathProblemProps
               animate={{ scale: 1 }}
               className="text-4xl font-bold text-purple-500"
             >
-              {content.operation} = ?
+              {safeContent.operation}
             </motion.div>
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               className="text-2xl font-bold text-purple-600"
             >
-              {content.question}
+              {safeContent.question}
             </motion.div>
           </div>
 
@@ -151,7 +160,7 @@ export function MathProblem({ content, isPlaying, onComplete }: MathProblemProps
               animate={{ opacity: 1, y: 0 }}
               className="grid grid-cols-3 gap-4 mt-8"
             >
-              {content.options.map((option) => (
+              {safeContent.options.map((option) => (
                 <Button
                   key={option.value}
                   onClick={() => handleOptionSelect(option.value)}
@@ -170,7 +179,7 @@ export function MathProblem({ content, isPlaying, onComplete }: MathProblemProps
               <div className={`text-lg p-4 rounded-lg ${
                 isCorrect ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
               }`}>
-                {content.options.find(opt => opt.value === selectedOption)?.response}
+                {safeContent.options.find(opt => opt.value === selectedOption)?.response}
               </div>
 
               {showCountingAnimation && (
@@ -213,7 +222,7 @@ export function MathProblem({ content, isPlaying, onComplete }: MathProblemProps
                 exit={{ opacity: 0, height: 0 }}
                 className="text-lg text-orange-500 italic bg-orange-50 p-4 rounded-lg"
               >
-                💡 {content.hint}
+                💡 {safeContent.hint}
               </motion.div>
             )}
           </AnimatePresence>

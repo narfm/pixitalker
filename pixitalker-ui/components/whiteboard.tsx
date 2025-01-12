@@ -6,9 +6,10 @@ import { Maximize2, Minimize2, Pause, Play } from 'lucide-react'
 import { Button } from "./ui/button"
 import { MathExample } from "./MathExample"
 import { MathProblem } from "./MathProblem"
-import { MathContent } from "./types/math"
 import { parseXML } from "@/lib/xml-parser"
 import { eventEmitter } from '@/lib/event-emitter'
+import { MathContent } from "./types/math"
+import { parseMathContent } from "@/lib/math-parser"
 
 export function Whiteboard() {
   const [isVisible] = useState(true)
@@ -30,10 +31,12 @@ export function Whiteboard() {
   }, []);
 
   useEffect(() => {
-    const handleMathContent = (data: { type: 'example' | 'problem', content: string }) => {
+    const handleMathContent = (data: any) => {
       try {
-        console.log('Received content:', data.content);
-        const newContent = parseXML(data.content);
+        console.log('Received content:', data);
+        // const newContent = parseXML(data.content);
+        const newContent = parseMathContent(data.content.type, data.content.content);
+        
         console.log('Parsed content:', newContent);
         
         setContentQueue(prev => {
