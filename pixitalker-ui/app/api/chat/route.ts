@@ -50,7 +50,23 @@ class MathAgentFactory {
     1. Adding operation-specific explanations and steps
     2. Maintaining consistency with the teacher's scenario`;
 
-    const exampleFormat = `
+    const subtractionExampleFormat = `
+    { 
+      "setup": "You have 5 🍪 on a plate, and you eat 2 🍪.", 
+      "visuals": { 
+        "objects": 
+            [ { "emoji": "🍪", "count": "5" } ], 
+        "action": { "type": "remove", 
+          "objects": 
+            [ { "emoji": "🍪", "count": "2" } ] 
+          } 
+      }, 
+      "operation": "Subtract the cookies you ate from the total cookies on the plate.", 
+      "explanation": "Let’s count the cookies left after eating! Start with 1, 2, 3, 4, 5 (the original count of cookies). Now, we take away 2 cookies: 1, 2... (the cookies you ate). What’s left on the plate? 1, 2, 3! There are 3 cookies left.", 
+      "result": "The result of subtracting 2 cookies from 5 cookies is 3 cookies." 
+    }`;
+
+    const additionExampleFormat = `
      {
       "setup": "You have [number] [specific emoji]] in one hand and [number] [specific emoji] in the other.",
       "visuals": {
@@ -101,7 +117,9 @@ class MathAgentFactory {
       ]
     }`;
 
-    return `${basePrompt}\n\nEnhance this structure:\n${task === 'example' ? exampleFormat : problemFormat}`;
+    const mathOperationReletedPrompt = operation === 'addition' ? additionExampleFormat : subtractionExampleFormat;
+
+    return `${basePrompt}\n\nEnhance this structure:\n${task === 'example' ? mathOperationReletedPrompt : problemFormat}`;
   }
 
   static async createAgent(operation: string): Promise<MathAgent> {

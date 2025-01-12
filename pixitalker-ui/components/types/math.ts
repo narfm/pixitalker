@@ -3,10 +3,16 @@ export interface MathObject {
   count: string
 }
 
+export interface VisualAction {
+  type: 'remove' | 'add'
+  objects: MathObject[]
+}
+
 export interface BaseContent {
   setup: string
   visuals: {
     objects: MathObject[]
+    action?: VisualAction
   }
   operation: string
 }

@@ -8,9 +8,14 @@ export const parseMathContent = (type: string, json: any): MathContent => {
     }
 
     // Convert visuals array to the correct format if needed
+    // Convert visuals array to the correct format and include actions with their objects if present
     const visuals = {
-      objects: Array.isArray(json.visuals) ? json.visuals : json.visuals.objects
-    }
+      objects: Array.isArray(json.visuals.objects) ? json.visuals.objects : [],
+      action: json.visuals.action ? {
+        type: json.visuals.action.type || '',
+        objects: Array.isArray(json.visuals.action.objects) ? json.visuals.action.objects : []
+      } : null
+    };
 
     if (type === 'example') {
       return {
