@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { MathExample } from "@/types/math"
+import { MathExample } from "./types/math"
 
 interface DivisionExampleProps {
   content: MathExample
@@ -29,32 +29,43 @@ export function DivisionExample({ content, isPlaying, onComplete }: DivisionExam
     let interval: NodeJS.Timeout
 
     if (currentStep === 2) {
-      // Handle division animation
-      const totalGroups = content.visuals.action?.groups?.[0].count || 0
-      const itemsPerGroup = content.visuals.action?.groups?.[0].objects[0].count || 0
-      
-      // Pre-calculate all groups
-      const allGroups: number[][] = Array.from({ length: totalGroups }, (_, groupIndex) => 
-        Array.from({ length: itemsPerGroup }, (_, itemIndex) => groupIndex * itemsPerGroup + itemIndex)
-      )
-      
-      interval = setInterval(() => {
-        setDistributionProgress(prev => {
-          if (prev < totalGroups) {
-            setGroupedItems(currentGroups => [...currentGroups, allGroups[prev]])
-            return prev + 1
-          }
-          clearInterval(interval)
-          // Move to next step after distribution is complete
-          timeout = setTimeout(() => {
-            setCurrentStep(prev => prev + 1)
-            setDistributionProgress(0) // Reset for next time
-          }, 2000)
-          return prev
-        })
-      }, 2000)
-
-    } else if (currentStep === 3) {
+        // Handle division animation
+        const totalGroups = content.visuals.action?.groups?.[0].count || 0
+        const itemsPerGroup = content.visuals.action?.groups?.[0].objects[0].count || 0
+        
+        // Pre-calculate all groups with sequential distribution
+        const allGroups: number[][] = []
+        for (let i = 0; i < totalGroups; i++) {
+          // Calculate indices for each group to ensure they're distinct
+          const startIndex = i * itemsPerGroup
+          const groupItems = Array.from(
+            { length: itemsPerGroup }, 
+            (_, index) => startIndex + index
+          )
+          allGroups.push(groupItems)
+        }
+        
+        interval = setInterval(() => {
+          setDistributionProgress(prev => {
+            if (prev < totalGroups) {
+              setGroupedItems(currentGroups => {
+                // Ensure we're adding a new unique group
+                if (!currentGroups.includes(allGroups[prev])) {
+                  return [...currentGroups, allGroups[prev]]
+                }
+                return currentGroups
+              })
+              return prev + 1
+            }
+            clearInterval(interval)
+            timeout = setTimeout(() => {
+              setCurrentStep(prev => prev + 1)
+              setDistributionProgress(0)
+            }, 2000)
+            return prev
+          })
+        }, 2000)
+      }else if (currentStep === 3) {
       // Handle counting animation for each group
       const totalGroups = groupedItems.length
       
