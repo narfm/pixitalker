@@ -31,7 +31,7 @@ export function DivisionExample({ content, isPlaying, onComplete }: DivisionExam
     if (currentStep === 2) {
         // Handle division animation
         const totalGroups = content.visuals.action?.groups?.[0].count || 0
-        const itemsPerGroup = content.visuals.action?.groups?.[0].objects[0].count || 0
+        const itemsPerGroup = Number(content.visuals.action?.groups?.[0].objects[0].count) || 0
         
         // Pre-calculate all groups with sequential distribution
         const allGroups: number[][] = []
@@ -103,8 +103,8 @@ export function DivisionExample({ content, isPlaying, onComplete }: DivisionExam
   }, [currentStep, isPlaying, content, groupedItems, onComplete])
 
   const renderItems = (items: number[], grouped: boolean = false) => {
-    const totalItems = parseInt(content.visuals.objects[0].count.toString())
-    const emoji = content.visuals.objects[0].emoji
+    const totalItems = parseInt(String(content.visuals?.objects?.[0]?.count || 0))
+    const emoji = content.visuals?.objects?.[0]?.emoji || '⭐'
 
     return (
       <div className={`flex gap-4 flex-wrap justify-center ${grouped ? 'p-4 border-2 border-dashed border-purple-300 rounded-xl bg-purple-50/50' : ''}`}>
@@ -149,13 +149,13 @@ export function DivisionExample({ content, isPlaying, onComplete }: DivisionExam
       title: "Let's See What We Have",
       content: (
         <motion.div className="space-y-6">
-          {renderItems(Array.from({ length: parseInt(content.visuals.objects[0].count.toString()) }, (_, i) => i))}
+          {renderItems(Array.from({ length: parseInt(String(content.visuals?.objects?.[0]?.count || 0)) }, (_, i) => i))}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             className="text-lg text-purple-600"
           >
-            We have {content.visuals.objects[0].count} {content.visuals.objects[0].emoji} in total
+            We have {content.visuals?.objects?.[0]?.count || 0} {content.visuals?.objects?.[0]?.emoji || '⭐'} in total
           </motion.div>
         </motion.div>
       )
