@@ -51,11 +51,11 @@ export function MathProblem({ content, isPlaying, onComplete }: MathProblemProps
     return () => clearTimeout(timeout)
   }, [currentStep, isPlaying])
 
-  const performAction = (action: string) => {
-    if (action.includes("counting")) {
+  const performAction = (correctAnswer: boolean) => {
+    if (!correctAnswer) {
       setShowCountingAnimation(true)
       let count = 0
-      const totalCount = safeContent.visuals.objects.reduce((acc, obj) => acc + parseInt(obj.count), 0)
+      const totalCount = safeContent.visuals.objects.reduce((acc, obj) => acc + parseInt(String(obj.count)), 0)
       
       countingRef.current = setInterval(() => {
         count++
@@ -65,7 +65,7 @@ export function MathProblem({ content, isPlaying, onComplete }: MathProblemProps
           setTimeout(() => setShowCountingAnimation(false), 2000)
         }
       }, 1000)
-    } else if (action.includes("celebrating")) {
+    } else if (correctAnswer) {
       confetti({
         particleCount: 100,
         spread: 70,
@@ -80,7 +80,14 @@ export function MathProblem({ content, isPlaying, onComplete }: MathProblemProps
     const option = safeContent.options.find(opt => opt.value === value)
     if (option) {
       setIsCorrect(option.is_correct)
-      performAction(option.action)
+      performAction(option.is_correct)
+      
+      // If answer is correct, trigger completion after celebration
+      if (option.is_correct) {
+        setTimeout(() => {
+          onComplete()
+        }, 2000) // Wait for celebration animation
+      }
     }
   }
 

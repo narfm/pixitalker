@@ -157,24 +157,24 @@ class MathAgentFactory {
       "hint": "[Provide helpful hint using the objects]",
       "options": [
         {
-          "value": "9",
-          "is_correct": "false",
+          "value": 9,
+          "is_correct": false,
           "response": "Think again, count them one by one"
         },
         {
           "value": 10,
-          "is_correct": "true",
+          "is_correct": true,
           "response": "Great job! That's correct. There are 10 puppies in total!",
           action: "Show a happy animation with puppies celebrating."
         },
         {
           "value": 1,
-          "is_correct": "false",
+          "is_correct": false,
           "response": "Not quite. Remember, there were 6 puppies, and 4 more joined. Try again!"
         },
         {
           "value": 15,
-          "is_correct": "false",
+          "is_correct": false,
           "response": "Oops, that's too many puppies! Count carefully and try again."
         }
       ]
