@@ -76,7 +76,7 @@ export function Whiteboard() {
 
   return (
     <Card className={`absolute right-12 top-1/2 -translate-y-1/2 p-6 shadow-2xl bg-gradient-to-br from-white to-blue-50 border-4 border-blue-300 rounded-xl transition-all duration-300 ${
-      isExpanded ? 'w-[1000px] h-[800px]' : 'w-[800px] h-[600px]'
+      isExpanded ? 'w-[1200px] h-[800px]' : 'w-[800px] h-[600px]'
     }`}>
       {contentQueue.length > 0 && (
         <div className="absolute top-2 right-2">
