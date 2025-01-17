@@ -44,7 +44,7 @@ export function SubtractionExample({ content, isPlaying, onComplete }: Subtracti
     } else if (currentStep < 4) {
       timeout = setTimeout(() => {
         setCurrentStep(prev => prev + 1)
-      }, currentStep === 3 ? 3000 : 4000)
+      }, currentStep === 3 ? 6000 : 4000)
     } else {
       timeout = setTimeout(onComplete, 3000)
     }
@@ -105,7 +105,7 @@ export function SubtractionExample({ content, isPlaying, onComplete }: Subtracti
           >
             {content.operation}
           </motion.div>
-          <div className="flex gap-2 flex-wrap justify-center max-w-[400px]">
+          <div className="flex gap-2 flex-wrap justify-center items-center mx-auto max-w-[80%]">
             {Array.from({ length: parseInt(content.visuals.objects[0].count) }).map((_, i) => (
               <motion.div
                 key={i}
@@ -115,8 +115,13 @@ export function SubtractionExample({ content, isPlaying, onComplete }: Subtracti
                   opacity: 0,
                   y: 50,
                   x: Math.random() * 100 - 50
-                } : { scale: 1 }}
-                transition={{ duration: 0.5 }}
+                } : {
+                  scale: [1, 1.2, 1],
+                  transition: {
+                    duration: 1,
+                    delay: i * 0.5
+                  }
+                }}                transition={{ duration: 0.5 }}
                 className="text-4xl"
               >
                 {content.visuals.objects[0].emoji}
