@@ -53,18 +53,18 @@ export function MathProblem({ content, isPlaying, onComplete }: MathProblemProps
 
   const performAction = (correctAnswer: boolean) => {
     if (!correctAnswer) {
-      setShowCountingAnimation(true)
-      let count = 0
-      const totalCount = safeContent.visuals.objects.reduce((acc, obj) => acc + parseInt(String(obj.count)), 0)
+      // setShowCountingAnimation(true)
+      // let count = 0
+      // const totalCount = safeContent.visuals.objects.reduce((acc, obj) => acc + parseInt(String(obj.count)), 0)
       
-      countingRef.current = setInterval(() => {
-        count++
-        setCurrentCount(count)
-        if (count >= totalCount) {
-          if (countingRef.current) clearInterval(countingRef.current)
-          setTimeout(() => setShowCountingAnimation(false), 2000)
-        }
-      }, 1000)
+      // countingRef.current = setInterval(() => {
+      //   count++
+      //   setCurrentCount(count)
+      //   if (count >= totalCount) {
+      //     if (countingRef.current) clearInterval(countingRef.current)
+      //     setTimeout(() => setShowCountingAnimation(false), 2000)
+      //   }
+      // }, 1000)
     } else if (correctAnswer) {
       confetti({
         particleCount: 100,
